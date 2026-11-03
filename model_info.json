@@ -1,0 +1,24 @@
+{
+  "title": "ทดสอบโมเดล YOLO",
+  "model": "model.onnx",
+  "rect_model": "model_rect.onnx",
+  "imgsz": 640,
+  "names": [
+    "dog",
+    "cat",
+    "person",
+    "car",
+    "motorcycle"
+  ],
+  "author": "จิรายุ แสงกล้า",
+  "studentId": "6806021410116",
+  "course": "DIGITAL IMAGE PROCESSING",
+  "samples": [
+    "samples/1.jpg",
+    "samples/2.jpg",
+    "samples/3.jpg",
+    "samples/4.jpg",
+    "samples/5.jpg",
+    "samples/6.jpg"
+  ]
+}
