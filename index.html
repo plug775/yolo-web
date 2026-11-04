@@ -98,7 +98,6 @@ aside { background: var(--surface); border: 1px solid var(--line); border-radius
 .status { font-size: 14px; color: var(--muted); margin-bottom: 16px; }
 .status.ok::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 8px; vertical-align: middle; }
 .status.error { color: var(--danger); }
-.ctrl { margin-bottom: 18px; }
 .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--paper); margin-bottom: 16px; }
 .seg button {
   font: inherit; font-weight: 600; border: 0; border-radius: 9px; padding: 9px 8px; cursor: pointer;
@@ -107,8 +106,6 @@ aside { background: var(--surface); border: 1px solid var(--line); border-radius
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 .seg button:disabled { opacity: .45; cursor: not-allowed; }
 .seg-note { font-size: 13px; color: var(--muted); margin: -8px 0 16px; }
-.ctrl label { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 4px; }
-.ctrl input[type=range] { width: 100%; accent-color: var(--accent); }
 .summary { font-size: 26px; font-weight: 700; margin: 0 0 6px; }
 ul.hits { list-style: none; margin: 0; padding: 0; }
 ul.hits li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 15px; }
@@ -155,10 +152,6 @@ ul.hits .pc { margin-left: auto; color: var(--muted); font-variant-numeric: tabu
         <button type="button" id="modeRect" aria-pressed="false" disabled>Rectangle</button>
       </div>
       <p class="seg-note" id="modeNote">Polygon = ระบายตามรูปทรงวัตถุ (Segment)</p>
-      <div class="ctrl">
-        <label for="conf"><span>ความมั่นใจขั้นต่ำ</span><span id="confVal">25%</span></label>
-        <input type="range" id="conf" min="5" max="95" step="5" value="25">
-      </div>
       <p class="summary" id="summary">ยังไม่มีรูป</p>
       <ul class="hits" id="hits"></ul>
       <div class="legend" id="legend"></div>
@@ -178,6 +171,7 @@ const PALETTE = ['#E6194B', '#2E9E4F', '#4363D8', '#F58231', '#911EB4', '#16A9C9
 const $ = (s) => document.querySelector(s);
 const sessions = { poly: null, rect: null };
 let mode = 'poly', names = [], S = 640, last = null;
+const CONF = 0.25;   // เกณฑ์ตายตัว เท่ากับค่าเริ่มต้นของ YOLO predict
 const MODE_LABEL = { poly: 'Polygon', rect: 'Rectangle' };
 const MODE_NOTE = { poly: 'Polygon = ระบายตามรูปทรงวัตถุ (Segment)', rect: 'Rectangle = ตีกรอบสี่เหลี่ยม (Detect)' };
 
@@ -357,9 +351,8 @@ function draw() {
   if (!last || !last.scanned || !last.out[mode]) return;
   const { lb, img } = last;
   const { det, proto, ms } = last.out[mode];
-  const conf = +$('#conf').value / 100;
   const nm = proto ? proto.dims[1] : 0;
-  const boxes = decode(det, nm, conf, names.length);
+  const boxes = decode(det, nm, CONF, names.length);
 
   const k = Math.min(1, 1600 / Math.max(lb.w, lb.h));
   const W = Math.round(lb.w * k), H = Math.round(lb.h * k);
@@ -409,7 +402,7 @@ function draw() {
   }
 
   // รายการผล
-  $('#summary').textContent = boxes.length ? `เจอ ${boxes.length} ชิ้น` : 'ไม่เจออะไรเลย ลองลดความมั่นใจลง';
+  $('#summary').textContent = boxes.length ? `เจอ ${boxes.length} ชิ้น` : 'ไม่เจอวัตถุที่รู้จักในรูปนี้';
   $('#hits').innerHTML = boxes.map((b) =>
     `<li><span class="sw" style="background:${color(b.cls)}"></span>${names[b.cls] ?? b.cls}<span class="pc">${(b.score * 100).toFixed(1)}%</span></li>`).join('');
   setStatus(`${MODE_LABEL[mode]} · ทายเสร็จใน ${Math.round(ms)} ms`, 'ok');
@@ -429,7 +422,6 @@ function loadFile(f) {
 }
 $('#file').addEventListener('change', (e) => { loadFile(e.target.files[0]); e.target.value = ''; });
 $('#file2').addEventListener('change', (e) => { loadFile(e.target.files[0]); e.target.value = ''; });
-$('#conf').addEventListener('input', (e) => { $('#confVal').textContent = e.target.value + '%'; draw(); });
 $('#scanBtn').addEventListener('click', scan);
 $('#modePoly').addEventListener('click', () => setMode('poly'));
 $('#modeRect').addEventListener('click', () => setMode('rect'));
